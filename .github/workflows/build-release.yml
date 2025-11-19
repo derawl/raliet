@@ -73,7 +73,7 @@ jobs:
         run: npm run build
 
       - name: Build Tauri Windows package(s)
-        run: npx tauri build --target msi
+        run: npx tauri build --target x86_64-pc-windows-msvc
         working-directory: .
 
       - name: Create GitHub Release and upload Windows artifacts
