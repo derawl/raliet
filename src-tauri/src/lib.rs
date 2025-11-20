@@ -2,7 +2,6 @@
 pub mod types;
 pub mod core;
 use crate::core::simulator_debug::trace_transaction;
-use crate::types::SimulatorDebugInfo;
 use ethers::types::TxHash;
 
 
