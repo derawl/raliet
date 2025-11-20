@@ -21,7 +21,131 @@ body {
   max-width: 1400px;
   margin: 0 auto;
   padding: 40px 20px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", sans-serif;
+
+  .main-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 16px;
+    margin-top: 18px;
+  }
+
+  .modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 700px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: auto;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .empty {
+    padding: 16px;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 14px;
+  }
+
+  .history-panel {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    padding: 12px;
+    height: 600px;
+    overflow: auto;
+  }
+
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px;
+    border-radius: 8px;
+    background: #f9fafb;
+    border-left: 4px solid #e5e7eb;
+  }
+  .history-meta {
+    flex: 1;
+    min-width: 0;
+  }
+  .history-title {
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .history-sub {
+    font-size: 12px;
+    color: #6b7280;
+  }
+  .history-actions {
+    display: flex;
+    gap: 6px;
+  }
+  .muted {
+    color: #6b7280;
+    font-size: 11px;
+    margin-left: 6px;
+  }
+
+  .save-history-button {
+    margin-left: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #eef2ff;
+    border: 1px solid #e5e7eb;
+  }
 }
 
 .app-header {
@@ -50,6 +174,90 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.rpc-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  width: 100%;
+}
+.rpc-select {
+  min-width: 200px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+.rpc-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+.rpc-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  font-family: "Monaco", "Menlo", monospace;
+}
+.rpc-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+.rpc-small {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+.rpc-small:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.mini-btn {
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.mini-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+.mini-btn:active {
+  transform: scale(0.98);
+}
+.rpc-list-inline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.rpc-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+.rpc-meta {
+  font-size: 12px;
+  color: #374151;
+}
+.rpc-actions {
+  display: flex;
+  gap: 6px;
+}
+
 .input-group {
   display: flex;
   flex-direction: column;
@@ -69,7 +277,7 @@ body {
   border-radius: 8px;
   font-size: 14px;
   transition: border-color 0.2s;
-  font-family: 'Monaco', 'Menlo', monospace;
+  font-family: "Monaco", "Menlo", monospace;
 }
 
 .input-group input:focus {
@@ -121,7 +329,7 @@ body {
   .input-row {
     grid-template-columns: 1fr;
   }
-  
+
   .app-header h1 {
     font-size: 28px;
   }
