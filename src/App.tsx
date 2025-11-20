@@ -4,19 +4,139 @@ import { TraceViewer } from "./components/TraceViewer";
 import "./App.css";
 
 function App() {
-  const [txHash, setTxHash] = useState("0x7e1b766cb4307a3dec2374b8ad01cae6a5eed96be3dfb8d3ae6b194d43aeaa6e");
+  const [txHash, setTxHash] = useState(
+    "0x7e1b766cb4307a3dec2374b8ad01cae6a5eed96be3dfb8d3ae6b194d43aeaa6e"
+  );
   const [rpcUrl, setRpcUrl] = useState("https://ethereum-rpc.publicnode.com");
   const [blockNumber, setBlockNumber] = useState("23812055");
   const [traceData, setTraceData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>("");
 
+  const [rpcList, setRpcList] = useState<Array<any>>(() => {
+    try {
+      const raw = localStorage.getItem("raliet_rpc_list");
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+  const [rpcLabel, setRpcLabel] = useState<string>("");
+  const [rpcChain, setRpcChain] = useState<string>("");
+  const [showRpcModal, setShowRpcModal] = useState(false);
+
+  const [history, setHistory] = useState<Array<any>>(() => {
+    try {
+      const raw = localStorage.getItem("raliet_trace_history");
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const saveHistory = (entry: any) => {
+    try {
+      setHistory((prev) => {
+        const keyTx = (entry.txHash || "").toString().toLowerCase();
+        const keyRpc = (entry.rpcUrl || "").toString().trim().toLowerCase();
+
+        const existingIndex = prev.findIndex((h) => {
+          const hTx = (h.txHash || "").toString().toLowerCase();
+          const hRpc = (h.rpcUrl || "").toString().trim().toLowerCase();
+          return hTx === keyTx && hRpc === keyRpc && keyTx !== "";
+        });
+
+        let next: Array<any>;
+        if (existingIndex !== -1) {
+          const copy = [...prev];
+          copy.splice(existingIndex, 1);
+          next = [entry, ...copy].slice(0, 100);
+        } else {
+          next = [entry, ...prev].slice(0, 100);
+        }
+
+        try {
+          localStorage.setItem("raliet_trace_history", JSON.stringify(next));
+        } catch (e) {
+          console.warn(e);
+        }
+
+        return next;
+      });
+    } catch (e) {
+      console.warn(e);
+    }
+  };
+
+  const saveRpc = (rpc: { label?: string; chain?: string; url: string }) => {
+    try {
+      const key = (rpc.url || "").toString().trim().toLowerCase();
+      setRpcList((prev) => {
+        const existing = prev.findIndex(
+          (r) => (r.url || "").toString().trim().toLowerCase() === key
+        );
+        let next: Array<any>;
+        const item = {
+          label: rpc.label || rpc.url,
+          chain: rpc.chain || "",
+          url: rpc.url,
+        };
+        if (existing !== -1) {
+          const copy = [...prev];
+          copy.splice(existing, 1);
+          next = [item, ...copy].slice(0, 50);
+        } else {
+          next = [item, ...prev].slice(0, 50);
+        }
+        try {
+          localStorage.setItem("raliet_rpc_list", JSON.stringify(next));
+        } catch (e) {
+          console.warn(e);
+        }
+        return next;
+      });
+    } catch (e) {
+      console.warn(e);
+    }
+  };
+
+  const deleteRpcAt = (index: number) => {
+    const next = rpcList.filter((_, i) => i !== index);
+    setRpcList(next);
+    try {
+      localStorage.setItem("raliet_rpc_list", JSON.stringify(next));
+    } catch (e) {}
+  };
+
+  const selectRpc = (index: number) => {
+    const r = rpcList[index];
+    if (!r) return;
+    setRpcUrl(r.url || "");
+    setRpcLabel(r.label || "");
+    setRpcChain(r.chain || "");
+  };
+
+  const deleteHistoryEntry = (index: number) => {
+    const next = history.filter((_, i) => i !== index);
+    setHistory(next);
+    try {
+      localStorage.setItem("raliet_trace_history", JSON.stringify(next));
+    } catch (e) {}
+  };
+
+  const loadHistoryEntry = (index: number) => {
+    const entry = history[index];
+    if (!entry) return;
+    setTxHash(entry.txHash || "");
+    setRpcUrl(entry.rpcUrl || "");
+    setBlockNumber(String(entry.blockNumber ?? ""));
+    setTraceData(entry.trace || null);
+  };
+
   async function debugTransaction() {
-    console.log("Starting debug_transaction call...");
     setLoading(true);
     setError("");
     setTraceData(null);
-    
     try {
       const result = await invoke("debug_transaction", {
         txHash,
@@ -24,10 +144,20 @@ function App() {
         block: parseInt(blockNumber),
       });
       let res = JSON.parse(result as string);
-      console.log("Debug transaction result:", res);
-      console.log("Result type:", typeof res);
-      console.log("Result keys:", res ? Object.keys(res as any) : "null");
       setTraceData(res);
+      try {
+        const entry = {
+          txHash,
+          rpcUrl,
+          blockNumber: parseInt(blockNumber),
+          overview: res?.overview ?? null,
+          trace: res ?? null,
+          timestamp: Date.now(),
+        };
+        saveHistory(entry);
+      } catch (e) {
+        console.warn(e);
+      }
     } catch (err) {
       console.error("Error calling debug_transaction:", err);
       setError(`Error: ${err}`);
@@ -54,18 +184,39 @@ function App() {
           />
         </div>
 
-        <div className="input-row">
-          <div className="input-group">
-            <label htmlFor="rpc-url">RPC URL</label>
+        <div className="input-group">
+          <label htmlFor="rpc-url">RPC URL</label>
+          <div className="rpc-row">
+            <select
+              className="rpc-select"
+              value={rpcList.findIndex((r) => (r.url || "") === rpcUrl)}
+              onChange={(e) => {
+                const idx = parseInt(e.target.value, 10);
+                if (!isNaN(idx) && idx >= 0) selectRpc(idx);
+              }}
+            >
+              <option value={-1}>-- Select saved RPC --</option>
+              {rpcList.map((r, i) => (
+                <option key={i} value={i}>
+                  {r.chain ? `${r.chain} — ${r.label}` : r.label}
+                </option>
+              ))}
+            </select>
             <input
               id="rpc-url"
+              className="rpc-input"
               type="text"
               value={rpcUrl}
               onChange={(e) => setRpcUrl(e.target.value)}
               placeholder="https://..."
             />
+            <button className="mini-btn" onClick={() => setShowRpcModal(true)}>
+              Manage
+            </button>
           </div>
+        </div>
 
+        <div className="input-row">
           <div className="input-group">
             <label htmlFor="block-number">Block Number</label>
             <input
@@ -78,18 +229,176 @@ function App() {
           </div>
         </div>
 
-        <button 
-          className="debug-button"
-          onClick={debugTransaction}
-          disabled={loading || !txHash || !rpcUrl || !blockNumber}
-        >
-          {loading ? "Tracing..." : "🔍 Debug Transaction"}
-        </button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button
+            className="debug-button"
+            onClick={debugTransaction}
+            disabled={loading || !txHash || !rpcUrl || !blockNumber}
+          >
+            {loading ? "Tracing..." : "🔍 Debug Transaction"}
+          </button>
+          <button
+            className="save-history-button"
+            disabled={!traceData}
+            onClick={() =>
+              saveHistory({
+                txHash,
+                rpcUrl,
+                blockNumber: parseInt(blockNumber),
+                overview: traceData?.overview ?? null,
+                trace: traceData,
+                timestamp: Date.now(),
+              })
+            }
+          >
+            💾 Save Trace
+          </button>
+        </div>
 
         {error && <div className="error-message">{error}</div>}
       </div>
 
-      <TraceViewer trace={traceData} loading={loading} />
+      <div className="main-grid">
+        <div className="left-panel">
+          <TraceViewer trace={traceData} loading={loading} />
+        </div>
+        <aside className="history-panel">
+          <div className="history-header">
+            <h3>History</h3>
+            <small>{history.length} saved</small>
+          </div>
+          <div className="history-list">
+            {history.length === 0 && (
+              <div className="empty">No history yet</div>
+            )}
+            {history.map((h, i) => (
+              <div key={i} className="history-item">
+                <div className="history-meta">
+                  <div className="history-title">
+                    {h.txHash?.slice(0, 12) ?? "—"}{" "}
+                    <span className="muted">{h.overview?.status ?? ""}</span>
+                  </div>
+                  <div className="history-sub">
+                    {h.rpcUrl} • #{h.blockNumber}
+                  </div>
+                </div>
+                <div className="history-actions">
+                  <button
+                    className="mini-btn"
+                    onClick={() => loadHistoryEntry(i)}
+                  >
+                    Load
+                  </button>
+                  <button
+                    className="mini-btn"
+                    onClick={() => {
+                      setTraceData(h.trace);
+                      setTxHash(h.txHash || "");
+                      setRpcUrl(h.rpcUrl || "");
+                      setBlockNumber(String(h.blockNumber || ""));
+                    }}
+                  >
+                    Set
+                  </button>
+                  <button
+                    className="mini-btn"
+                    onClick={() => deleteHistoryEntry(i)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </aside>
+      </div>
+
+      {showRpcModal && (
+        <div className="modal-backdrop" onClick={() => setShowRpcModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Manage RPCs</h3>
+              <button
+                className="mini-btn"
+                onClick={() => setShowRpcModal(false)}
+              >
+                Close
+              </button>
+            </div>
+            <div className="modal-body">
+              <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+                <input
+                  className="rpc-small"
+                  placeholder="Label"
+                  value={rpcLabel}
+                  onChange={(e) => setRpcLabel(e.target.value)}
+                />
+                <input
+                  className="rpc-small"
+                  placeholder="Chain"
+                  value={rpcChain}
+                  onChange={(e) => setRpcChain(e.target.value)}
+                />
+                <input
+                  className="rpc-input"
+                  value={rpcUrl}
+                  onChange={(e) => setRpcUrl(e.target.value)}
+                  placeholder="https://..."
+                />
+                <button
+                  className="mini-btn"
+                  onClick={() => {
+                    saveRpc({
+                      label: rpcLabel || rpcUrl,
+                      chain: rpcChain,
+                      url: rpcUrl,
+                    });
+                    setRpcLabel("");
+                    setRpcChain("");
+                  }}
+                >
+                  Save
+                </button>
+              </div>
+              <div className="rpc-list-inline">
+                {rpcList.length === 0 && (
+                  <div className="empty">No saved RPCs</div>
+                )}
+                {rpcList.map((r, i) => (
+                  <div key={i} className="rpc-item">
+                    <div>
+                      <div className="rpc-meta">
+                        {r.chain ? `${r.chain} · ` : ""}
+                        {r.label}
+                      </div>
+                      <div style={{ fontSize: 12, color: "#6b7280" }}>
+                        {r.url}
+                      </div>
+                    </div>
+                    <div className="rpc-actions">
+                      <button
+                        className="mini-btn"
+                        onClick={() => {
+                          selectRpc(i);
+                          setShowRpcModal(false);
+                        }}
+                      >
+                        Use
+                      </button>
+                      <button
+                        className="mini-btn"
+                        onClick={() => deleteRpcAt(i)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
