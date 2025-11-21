@@ -317,12 +317,23 @@ body {
 
 .error-message {
   margin-top: 16px;
-  padding: 12px 16px;
-  background: #fee;
+  padding: 16px 18px;
+  background: #fef2f2;
   border-left: 4px solid #dc2626;
-  border-radius: 4px;
+  border-radius: 8px;
   color: #991b1b;
   font-size: 14px;
+  line-height: 1.6;
+  max-height: 200px;
+  overflow-y: auto;
+  word-break: break-word;
+}
+
+.error-message strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #7f1d1d;
+  font-weight: 600;
 }
 
 @media (max-width: 768px) {
