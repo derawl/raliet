@@ -93,29 +93,72 @@ pub async fn trace_transaction(
     rpc_url: &str,
     block: u64,
 ) -> anyhow::Result<Value> {
+    use tokio::time::{timeout, Duration};
+    
     println!("Tracing transaction: {:?} at block {} using RPC: {}", tx_hash, block, rpc_url);
 
     let anvil_path = get_anvil_path();
     
+    if !anvil_path.exists() {
+        return Err(anyhow::anyhow!("Anvil binary not found at {:?}. Please ensure Foundry is installed.", anvil_path));
+    }
+    
     // Start Anvil with full tracing enabled
-    let anvil = Anvil::new()
-        .path(anvil_path)
-        .fork(rpc_url)
-        .fork_block_number(block)
-        .args(vec!["--steps-tracing", "--code-size-limit", "41943040"])
-        .spawn();
+    println!("Starting Anvil fork at block {}...", block);
+    let anvil_result = std::panic::catch_unwind(|| {
+        Anvil::new()
+            .path(anvil_path)
+            .fork(rpc_url)
+            .fork_block_number(block)
+            .args(vec!["--steps-tracing", "--code-size-limit", "41943040"])
+            .spawn()
+    });
+    
+    let anvil = match anvil_result {
+        Ok(anvil) => anvil,
+        Err(e) => {
+            let error_msg = if let Some(s) = e.downcast_ref::<String>() {
+                s.clone()
+            } else if let Some(s) = e.downcast_ref::<&str>() {
+                s.to_string()
+            } else {
+                "Unknown error starting Anvil".to_string()
+            };
+            
+            // Check for common error patterns
+            if error_msg.contains("archive node") || error_msg.contains("oldlder block") {
+                return Err(anyhow::anyhow!(
+                    "Archive node required: Block {} is too old for this RPC endpoint. Please use an archive node RPC (like Alchemy, Infura, or QuickNode with archive access).",
+                    block
+                ));
+            } else if error_msg.contains("Timed out") {
+                return Err(anyhow::anyhow!("Failed to start Anvil. The process timed out. Please check that Anvil is properly installed."));
+            } else {
+                return Err(anyhow::anyhow!("Failed to start Anvil: {}", error_msg));
+            }
+        }
+    };
 
     println!("Anvil node started at: {}", anvil.endpoint());
 
-    let provider = Arc::new(Provider::<Http>::try_from(anvil.endpoint())?);
+    let provider = Arc::new(Provider::<Http>::try_from(anvil.endpoint())
+        .map_err(|e| anyhow::anyhow!("Failed to connect to Anvil: {}", e))?);
 
-    // Get the transaction receipt and details
+    // Get the transaction receipt and details with timeout
     println!("Fetching transaction receipt...");
-    let tx_receipt = provider.get_transaction_receipt(tx_hash).await?
-        .ok_or_else(|| anyhow::anyhow!("Transaction not found"))?;
+    let tx_receipt = match timeout(Duration::from_secs(30), provider.get_transaction_receipt(tx_hash)).await {
+        Ok(Ok(Some(receipt))) => receipt,
+        Ok(Ok(None)) => return Err(anyhow::anyhow!("Transaction {} not found. Verify the transaction hash and block number are correct.", tx_hash)),
+        Ok(Err(e)) => return Err(anyhow::anyhow!("Failed to fetch transaction receipt: {}", e)),
+        Err(_) => return Err(anyhow::anyhow!("Timeout while fetching transaction receipt. The RPC might be slow or unresponsive.")),
+    };
     
-    let tx_details = provider.get_transaction(tx_hash).await?
-        .ok_or_else(|| anyhow::anyhow!("Transaction details not found"))?;
+    let tx_details = match timeout(Duration::from_secs(30), provider.get_transaction(tx_hash)).await {
+        Ok(Ok(Some(details))) => details,
+        Ok(Ok(None)) => return Err(anyhow::anyhow!("Transaction details not found for {}.", tx_hash)),
+        Ok(Err(e)) => return Err(anyhow::anyhow!("Failed to fetch transaction details: {}", e)),
+        Err(_) => return Err(anyhow::anyhow!("Timeout while fetching transaction details. The RPC might be slow or unresponsive.")),
+    };
 
     // Format trace in Tenderly style
     let cast_trace = match get_cast_trace_quick(tx_hash, &tx_details, &anvil.endpoint().to_string()).await {
@@ -177,7 +220,7 @@ async fn get_cast_trace_quick(tx_hash: TxHash, tx_details: &ethers::types::Trans
         .arg(rpc_url);
     
     let output_result = timeout(
-        Duration::from_secs(30),
+        Duration::from_secs(120),
         cmd.output()
     ).await;
     
@@ -188,8 +231,8 @@ async fn get_cast_trace_quick(tx_hash: TxHash, tx_details: &ethers::types::Trans
             return Err(anyhow::anyhow!("Failed to execute cast: {}", e));
         }
         Err(_) => {
-            println!("Cast execution timed out");
-            return Err(anyhow::anyhow!("Cast execution timed out"));
+            println!("Cast execution timed out after 120 seconds");
+            return Err(anyhow::anyhow!("Cast execution timed out after 120 seconds. Try a simpler transaction or check your RPC endpoint."));
         }
     };
     
