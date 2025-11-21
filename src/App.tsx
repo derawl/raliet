@@ -158,9 +158,19 @@ function App() {
       } catch (e) {
         console.warn(e);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error calling debug_transaction:", err);
-      setError(`Error: ${err}`);
+      
+      // Extract meaningful error message
+      let errorMsg = String(err);
+      if (err.message) {
+        errorMsg = err.message;
+      }
+      
+      // Clean up the error message
+      errorMsg = errorMsg.replace(/^Error:\s*/i, '');
+      
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
