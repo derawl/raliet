@@ -34,6 +34,8 @@ function App() {
     }
   });
 
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
   const saveHistory = (entry: any) => {
     try {
       setHistory((prev) => {
@@ -160,16 +162,16 @@ function App() {
       }
     } catch (err: any) {
       console.error("Error calling debug_transaction:", err);
-      
+
       // Extract meaningful error message
       let errorMsg = String(err);
       if (err.message) {
         errorMsg = err.message;
       }
-      
+
       // Clean up the error message
-      errorMsg = errorMsg.replace(/^Error:\s*/i, '');
-      
+      errorMsg = errorMsg.replace(/^Error:\s*/i, "");
+
       setError(errorMsg);
     } finally {
       setLoading(false);
@@ -186,192 +188,252 @@ function App() {
         <div className="titlebar-right">
           {traceData && (
             <div className="transaction-summary">
-              <span className={`status-badge ${traceData.overview?.status === 'Success' ? 'success' : 'failed'}`}>
-                {traceData.overview?.status || 'Unknown'}
+              <span
+                className={`status-badge ${
+                  traceData.overview?.status === "Success"
+                    ? "success"
+                    : "failed"
+                }`}
+              >
+                {traceData.overview?.status || "Unknown"}
               </span>
-              <span className="gas-info">Gas: {traceData.overview?.gas_used || 'N/A'}</span>
+              <span className="gas-info">
+                Gas: {traceData.overview?.gas_used || "N/A"}
+              </span>
             </div>
           )}
         </div>
       </header>
 
       <div className="app-body">
-        <aside className="sidebar">
+        <button
+          className="sidebar-toggle"
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          {sidebarCollapsed ? "›" : "‹"}
+        </button>
+        <aside className={`sidebar ${sidebarCollapsed ? "collapsed" : ""}`}>
           <div className="sidebar-section">
             <h3 className="section-title">Transaction Input</h3>
-        <div className="input-group">
-          <label htmlFor="tx-hash">Transaction Hash</label>
-          <input
-            id="tx-hash"
-            type="text"
-            value={txHash}
-            onChange={(e) => setTxHash(e.target.value)}
-            placeholder="0x..."
-          />
-        </div>
+            <div className="input-group">
+              <label htmlFor="tx-hash">Transaction Hash</label>
+              <input
+                id="tx-hash"
+                type="text"
+                value={txHash}
+                onChange={(e) => setTxHash(e.target.value)}
+                placeholder="0x..."
+              />
+            </div>
 
-        <div className="input-group">
-          <label htmlFor="rpc-url">RPC URL</label>
-          <div className="rpc-select-row">
-            <select
-              className="rpc-select"
-              value={rpcList.findIndex((r) => (r.url || "") === rpcUrl)}
-              onChange={(e) => {
-                const idx = parseInt(e.target.value, 10);
-                if (!isNaN(idx) && idx >= 0) selectRpc(idx);
-              }}
-            >
-              <option value={-1}>-- Select saved --</option>
-              {rpcList.map((r, i) => (
-                <option key={i} value={i}>
-                  {r.chain ? `${r.chain} — ${r.label}` : r.label}
-                </option>
-              ))}
-            </select>
-            <button className="manage-btn" onClick={() => setShowRpcModal(true)}>
-              Manage
-            </button>
-          </div>
-          <input
-            id="rpc-url"
-            className="rpc-input-full"
-            type="text"
-            value={rpcUrl}
-            onChange={(e) => setRpcUrl(e.target.value)}
-            placeholder="https://..."
-          />
-        </div>
+            <div className="input-group">
+              <label htmlFor="rpc-url">RPC URL</label>
+              <div className="rpc-select-row">
+                <select
+                  className="rpc-select"
+                  value={rpcList.findIndex((r) => (r.url || "") === rpcUrl)}
+                  onChange={(e) => {
+                    const idx = parseInt(e.target.value, 10);
+                    if (!isNaN(idx) && idx >= 0) selectRpc(idx);
+                  }}
+                >
+                  <option value={-1}>-- Select saved --</option>
+                  {rpcList.map((r, i) => (
+                    <option key={i} value={i}>
+                      {r.chain ? `${r.chain} — ${r.label}` : r.label}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  className="manage-btn"
+                  onClick={() => setShowRpcModal(true)}
+                >
+                  Manage
+                </button>
+              </div>
+              <input
+                id="rpc-url"
+                className="rpc-input-full"
+                type="text"
+                value={rpcUrl}
+                onChange={(e) => setRpcUrl(e.target.value)}
+                placeholder="https://..."
+              />
+            </div>
 
-        <div className="input-row">
-          <div className="input-group">
-            <label htmlFor="block-number">Block Number</label>
-            <input
-              id="block-number"
-              type="text"
-              value={blockNumber}
-              onChange={(e) => setBlockNumber(e.target.value)}
-              placeholder="Block number"
-            />
-          </div>
-        </div>
+            <div className="input-row">
+              <div className="input-group">
+                <label htmlFor="block-number">Block Number</label>
+                <input
+                  id="block-number"
+                  type="text"
+                  value={blockNumber}
+                  onChange={(e) => setBlockNumber(e.target.value)}
+                  placeholder="Block number"
+                />
+              </div>
+            </div>
 
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          <button
-            className="debug-button"
-            onClick={debugTransaction}
-            disabled={loading || !txHash || !rpcUrl || !blockNumber}
-          >
-            {loading ? "Tracing..." : "🔍 Debug Transaction"}
-          </button>
-          <button
-            className="save-history-button"
-            disabled={!traceData}
-            onClick={() =>
-              saveHistory({
-                txHash,
-                rpcUrl,
-                blockNumber: parseInt(blockNumber),
-                overview: traceData?.overview ?? null,
-                trace: traceData,
-                timestamp: Date.now(),
-              })
-            }
-          >
-            💾 Save Trace
-          </button>
-        </div>
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              <button
+                className="debug-button"
+                onClick={debugTransaction}
+                disabled={loading || !txHash || !rpcUrl || !blockNumber}
+              >
+                {loading ? "Tracing..." : "🔍 Debug Transaction"}
+              </button>
+              <button
+                className="save-history-button"
+                disabled={!traceData}
+                onClick={() =>
+                  saveHistory({
+                    txHash,
+                    rpcUrl,
+                    blockNumber: parseInt(blockNumber),
+                    overview: traceData?.overview ?? null,
+                    trace: traceData,
+                    timestamp: Date.now(),
+                  })
+                }
+              >
+                💾 Save Trace
+              </button>
+            </div>
 
-        {error && <div className="error-message">{error}</div>}
+            {error && <div className="error-message">{error}</div>}
           </div>
 
           <div className="sidebar-section history-section">
-        <h3 className="section-title">History</h3>
-        <div className="history-list">
-          {history.length === 0 && (
-            <div className="empty">No traces yet</div>
+            <h3 className="section-title">History</h3>
+            <div className="history-list">
+              {history.length === 0 && (
+                <div className="empty">No traces yet</div>
+              )}
+              {history.map((h, i) => (
+                <div key={i} className="history-item">
+                  <div className="history-meta">
+                    <div className="history-title">
+                      {h.txHash?.slice(0, 10) ?? "—"}
+                      <span className="muted">{h.overview?.status ?? ""}</span>
+                    </div>
+                    <div className="history-sub">Block #{h.blockNumber}</div>
+                  </div>
+                  <div className="history-actions">
+                    <button
+                      className="mini-btn"
+                      onClick={() => loadHistoryEntry(i)}
+                    >
+                      Load
+                    </button>
+                    <button
+                      className="mini-btn"
+                      onClick={() => deleteHistoryEntry(i)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </aside>
+
+        <main className="main-content">
+          {!traceData && !loading && (
+            <div className="empty-state">
+              <div className="empty-icon">🔍</div>
+              <h2>No Transaction Loaded</h2>
+              <p>
+                Enter a transaction hash and click "Debug Transaction" to start
+              </p>
+            </div>
           )}
-          {history.map((h, i) => (
-            <div key={i} className="history-item">
-              <div className="history-meta">
-                <div className="history-title">
-                  {h.txHash?.slice(0, 10) ?? "—"}
-                  <span className="muted">{h.overview?.status ?? ""}</span>
-                </div>
-                <div className="history-sub">
-                  Block #{h.blockNumber}
+
+          {loading && (
+            <div className="loading-state">
+              <div className="spinner"></div>
+              <p>Tracing transaction...</p>
+            </div>
+          )}
+
+          {traceData && !loading && (
+            <div className="debugger-panels">
+              <div className="transaction-details-panel">
+                <h3 className="panel-title">Transaction Details</h3>
+                <div className="details-grid">
+                  <div className="detail-item">
+                    <span className="detail-label">Transaction Hash</span>
+                    <span className="detail-value mono" title={txHash}>
+                      {txHash.slice(0, 10)}...{txHash.slice(-8)}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">From</span>
+                    <span
+                      className="detail-value mono"
+                      title={traceData.transactionInfo?.from}
+                    >
+                      {traceData.transactionInfo?.from
+                        ? `${traceData.transactionInfo.from.slice(
+                            0,
+                            6
+                          )}...${traceData.transactionInfo.from.slice(-4)}`
+                        : "N/A"}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">To</span>
+                    <span
+                      className="detail-value mono"
+                      title={traceData.transactionInfo?.to}
+                    >
+                      {traceData.transactionInfo?.to
+                        ? `${traceData.transactionInfo.to.slice(
+                            0,
+                            6
+                          )}...${traceData.transactionInfo.to.slice(-4)}`
+                        : "N/A"}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Value</span>
+                    <span className="detail-value">
+                      {traceData.transactionInfo?.value || "0 ETH"}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Gas Used</span>
+                    <span className="detail-value">
+                      {traceData.gasDetails?.gasUsed || "N/A"}
+                    </span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Block</span>
+                    <span className="detail-value">#{blockNumber}</span>
+                  </div>
+                  <div className="detail-item">
+                    <span className="detail-label">Status</span>
+                    <span
+                      className={`detail-value status-badge ${
+                        traceData.overview?.status === "Success"
+                          ? "success"
+                          : "failed"
+                      }`}
+                    >
+                      {traceData.overview?.status || "Unknown"}
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="history-actions">
-                <button className="mini-btn" onClick={() => loadHistoryEntry(i)}>
-                  Load
-                </button>
-                <button className="mini-btn" onClick={() => deleteHistoryEntry(i)}>
-                  Delete
-                </button>
+
+              <div className="trace-panel">
+                <TraceViewer trace={traceData} loading={loading} />
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        </main>
       </div>
-    </aside>
-
-    <main className="main-content">
-      {!traceData && !loading && (
-        <div className="empty-state">
-          <div className="empty-icon">🔍</div>
-          <h2>No Transaction Loaded</h2>
-          <p>Enter a transaction hash and click "Debug Transaction" to start</p>
-        </div>
-      )}
-      
-      {loading && (
-        <div className="loading-state">
-          <div className="spinner"></div>
-          <p>Tracing transaction...</p>
-        </div>
-      )}
-
-      {traceData && !loading && (
-        <div className="debugger-panels">
-          <div className="transaction-details-panel">
-            <h3 className="panel-title">Transaction Details</h3>
-            <div className="details-grid">
-              <div className="detail-item">
-                <span className="detail-label">From</span>
-                <span className="detail-value mono">{traceData.overview?.from || 'N/A'}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">To</span>
-                <span className="detail-value mono">{traceData.overview?.to || 'N/A'}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Value</span>
-                <span className="detail-value">{traceData.overview?.value || '0'} ETH</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Gas Used</span>
-                <span className="detail-value">{traceData.overview?.gas_used || 'N/A'}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Block</span>
-                <span className="detail-value">#{blockNumber}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Status</span>
-                <span className={`detail-value status-badge ${traceData.overview?.status === 'Success' ? 'success' : 'failed'}`}>
-                  {traceData.overview?.status || 'Unknown'}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <div className="trace-panel">
-            <TraceViewer trace={traceData} loading={loading} />
-          </div>
-        </div>
-      )}
-    </main>
-  </div>
 
       {showRpcModal && (
         <div className="modal-backdrop" onClick={() => setShowRpcModal(false)}>
