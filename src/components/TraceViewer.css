@@ -125,7 +125,7 @@
 
 /* Content */
 .trace-content {
-  padding: 24px;
+  padding: 2px;
   max-height: 600px;
   overflow-y: auto;
 }
@@ -512,12 +512,16 @@
   background: #374151;
   padding: 16px 20px;
   border-bottom: 2px solid #4b5563;
+  overflow-x: auto;
 }
 
 .call-name {
   color: #e5e7eb;
   font-size: 14px;
   display: block;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .call-execution {
@@ -530,6 +534,7 @@
   gap: 16px;
   padding: 6px 20px;
   transition: background 0.2s;
+  align-items: flex-start;
 }
 
 .execution-line:hover {
@@ -549,6 +554,9 @@
   color: #e5e7eb;
   font-size: 13px;
   flex: 1;
+  word-break: break-all;
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 /* Events Tab */
