@@ -35,7 +35,8 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - uses: tauri-apps/tauri-action@v1
+      - name: Build Tauri app and create release
+        uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
