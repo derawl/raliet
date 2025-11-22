@@ -1,4 +1,4 @@
-name: Build and release Windows packages
+name: Build and Release
 
 on:
   push:
@@ -9,84 +9,39 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-windows:
-    runs-on: windows-latest
+  publish-tauri:
     permissions:
       contents: write
-    env:
-      CI: true
+    runs-on: windows-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Auto-create tag from package.json
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        shell: bash
-        run: |
-          echo "Checking package.json version and creating tag if missing"
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          TAG="v${PKG_VERSION}"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists; skipping"
-          else
-            git tag -a "$TAG" -m "release $TAG"
-            git push origin "$TAG"
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "18"
+          node-version: "20"
           cache: "npm"
 
-      - name: Cache cargo registry & src-tauri target
-        uses: actions/cache@v4
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            src-tauri/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml', '**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-cargo-
+          targets: x86_64-pc-windows-msvc
 
-      - name: Install WiX Toolset (required for MSI builds)
-        run: choco install wixtoolset -y
-
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-          components: rustfmt
-          target: x86_64-pc-windows-msvc
-
-      - name: Install JS dependencies
+      - name: Install frontend dependencies
         run: npm ci
 
-      - name: Build frontend assets
+      - name: Build frontend
         run: npm run build
 
-      - name: Build Tauri Windows package(s)
-        run: npx tauri build --target x86_64-pc-windows-msvc
-        working-directory: .
-
-      - name: Create GitHub Release and upload Windows artifacts
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-          allowUpdates: true
-          files: |
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/*.msi
-            src-tauri/target/x86_64-pc-windows-msvc/release/bundle/nsis/*.exe
+      - uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: app-v__VERSION__
+          releaseName: "Raliet v__VERSION__"
+          releaseBody: "See the assets to download and install this version."
+          releaseDraft: false
+          prerelease: false
+          args: --target x86_64-pc-windows-msvc
