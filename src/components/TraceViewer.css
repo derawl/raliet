@@ -1,8 +1,9 @@
 .trace-viewer {
-  background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: #27272a;
+  height: 100%;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", sans-serif;
 }
@@ -91,29 +92,34 @@
 /* Tabs */
 .trace-tabs {
   display: flex;
-  border-bottom: 2px solid #e5e7eb;
-  background: #f9fafb;
+  border-bottom: 2px solid #3f3f46;
+  background: #18181b;
+  flex-shrink: 0;
+  overflow-x: auto;
 }
 
 .trace-tabs button {
-  padding: 12px 24px;
+  padding: 12px 20px;
   border: none;
+  white-space: nowrap;
   background: none;
   cursor: pointer;
   font-weight: 500;
-  color: #6b7280;
+  color: #71717a;
   transition: all 0.2s;
   border-bottom: 3px solid transparent;
+  font-size: 13px;
 }
 
 .trace-tabs button:hover {
-  background: #f3f4f6;
-  color: #111827;
+  background: #27272a;
+  color: #e4e4e7;
 }
 
 .trace-tabs button.active {
   color: #3b82f6;
   border-bottom-color: #3b82f6;
+  background: #27272a;
   background: #ffffff;
 }
 
@@ -229,15 +235,17 @@
 }
 
 .panel-header {
-  padding: 12px 20px;
+  padding: 12px 16px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 2px solid #e5e7eb;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .functions-panel .panel-header {
@@ -269,8 +277,9 @@
 
 .panel-header .panel-actions {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
+  flex-wrap: wrap;
 }
 
 .mini-btn {
@@ -281,10 +290,29 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .mini-btn:hover {
   background: #eef2ff;
+}
+
+.action-btn {
+  background: #27272a;
+  border: 1px solid #3f3f46;
+  color: #a1a1aa;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.action-btn:hover {
+  background: #3f3f46;
+  color: #e4e4e7;
 }
 
 .mini-btn.copy-call {
@@ -292,13 +320,26 @@
   font-size: 11px;
 }
 
+.panel-search {
+  padding: 8px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+}
+
 .search-input {
-  padding: 8px 10px;
+  width: 100%;
+  padding: 8px 12px;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 13px;
-  min-width: 180px;
   background: #ffffff;
+  transition: all 0.2s;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .events-tools {
@@ -764,21 +805,43 @@
 /* Raw Trace Tab */
 .raw-tab {
   height: 100%;
-  overflow: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .raw-trace-container {
-  padding: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
   background: #1f2937;
-  min-height: 100%;
+  overflow: hidden;
+}
+
+.raw-trace-header {
+  padding: 12px 16px;
+  background: #374151;
+  border-bottom: 2px solid #4b5563;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.raw-trace-header .panel-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: #f9fafb;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .raw-trace-output {
+  flex: 1;
   background: #111827;
-  border: 1px solid #374151;
-  border-radius: 8px;
   padding: 20px;
-  overflow-x: auto;
+  overflow: auto;
   color: #e5e7eb;
   font-family: "Consolas", "Monaco", "Courier New", monospace;
   font-size: 13px;
