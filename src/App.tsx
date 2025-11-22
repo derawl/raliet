@@ -212,7 +212,7 @@ function App() {
 
         <div className="input-group">
           <label htmlFor="rpc-url">RPC URL</label>
-          <div className="rpc-row">
+          <div className="rpc-select-row">
             <select
               className="rpc-select"
               value={rpcList.findIndex((r) => (r.url || "") === rpcUrl)}
@@ -221,25 +221,25 @@ function App() {
                 if (!isNaN(idx) && idx >= 0) selectRpc(idx);
               }}
             >
-              <option value={-1}>-- Select saved RPC --</option>
+              <option value={-1}>-- Select saved --</option>
               {rpcList.map((r, i) => (
                 <option key={i} value={i}>
                   {r.chain ? `${r.chain} — ${r.label}` : r.label}
                 </option>
               ))}
             </select>
-            <input
-              id="rpc-url"
-              className="rpc-input"
-              type="text"
-              value={rpcUrl}
-              onChange={(e) => setRpcUrl(e.target.value)}
-              placeholder="https://..."
-            />
-            <button className="mini-btn" onClick={() => setShowRpcModal(true)}>
+            <button className="manage-btn" onClick={() => setShowRpcModal(true)}>
               Manage
             </button>
           </div>
+          <input
+            id="rpc-url"
+            className="rpc-input-full"
+            type="text"
+            value={rpcUrl}
+            onChange={(e) => setRpcUrl(e.target.value)}
+            placeholder="https://..."
+          />
         </div>
 
         <div className="input-row">
