@@ -578,28 +578,22 @@ export function TraceViewer({ trace, loading }: TraceViewerProps) {
                   <div className="panel-header">
                     <div className="panel-title">Function Call Tree</div>
                     <div className="panel-actions">
-                      <input
-                        className="search-input"
-                        placeholder="Filter calls (fn name/address)"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
                       <button
-                        className="mini-btn"
+                        className="action-btn"
                         onClick={expandAll}
                         title="Expand all"
                       >
                         Expand
                       </button>
                       <button
-                        className="mini-btn"
+                        className="action-btn"
                         onClick={collapseAll}
                         title="Collapse all"
                       >
                         Collapse
                       </button>
                       <button
-                        className="mini-btn"
+                        className="action-btn"
                         onClick={() =>
                           copyToClipboard(
                             trace.callTrace?.raw ??
@@ -608,9 +602,17 @@ export function TraceViewer({ trace, loading }: TraceViewerProps) {
                         }
                         title="Copy raw trace"
                       >
-                        Copy Raw
+                        Copy
                       </button>
                     </div>
+                  </div>
+                  <div className="panel-search">
+                    <input
+                      className="search-input"
+                      placeholder="Filter calls..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
                   </div>
                   <div className="functions-list">
                     {renderCallTree(
@@ -695,6 +697,15 @@ export function TraceViewer({ trace, loading }: TraceViewerProps) {
           <div className="raw-tab">
             {trace.callTrace?.raw ? (
               <div className="raw-trace-container">
+                <div className="raw-trace-header">
+                  <div className="panel-title">Raw Trace Output</div>
+                  <button
+                    className="action-btn"
+                    onClick={() => copyToClipboard(trace.callTrace?.raw ?? "")}
+                  >
+                    Copy
+                  </button>
+                </div>
                 <pre
                   className="raw-trace-output"
                   dangerouslySetInnerHTML={{
