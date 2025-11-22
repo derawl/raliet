@@ -98,14 +98,6 @@ export function TraceViewer({ trace, loading }: TraceViewerProps) {
     );
   }
 
-  const getStatusIcon = (status: string) => {
-    return status.includes("Success") ? "✓" : "✗";
-  };
-
-  const getStatusClass = (status: string) => {
-    return status.includes("Success") ? "success" : "failed";
-  };
-
   const toggleExpand = (index: number) => {
     const newExpanded = new Set(expandedCalls);
     if (newExpanded.has(index)) {
@@ -361,38 +353,6 @@ export function TraceViewer({ trace, loading }: TraceViewerProps) {
 
   return (
     <div className="trace-viewer">
-      {/* Header with status */}
-      {trace.overview && (
-        <div
-          className={`trace-header ${getStatusClass(
-            trace.overview?.status ?? ""
-          )}`}
-        >
-          <div className="status-badge">
-            <span className="status-icon">
-              {getStatusIcon(trace.overview?.status ?? "")}
-            </span>
-            <span className="status-text">{trace.overview?.status}</span>
-          </div>
-          <div className="tx-hash">
-            <span className="label">Transaction Hash:</span>
-            <code>{trace.overview.transactionHash}</code>
-            <button
-              className="mini-btn"
-              onClick={() =>
-                copyToClipboard(trace.overview?.transactionHash ?? "")
-              }
-            >
-              Copy
-            </button>
-          </div>
-          <div className="block-number">
-            <span className="label">Block:</span>
-            <code>{trace.overview?.block}</code>
-          </div>
-        </div>
-      )}
-
       {/* Tabs */}
       <div className="trace-tabs">
         <button
