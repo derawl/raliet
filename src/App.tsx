@@ -190,7 +190,7 @@ function App() {
             <div className="transaction-summary">
               <span
                 className={`status-badge ${
-                  traceData.overview?.status === "Success"
+                  traceData.overview?.status === "✓ Success"
                     ? "success"
                     : "failed"
                 }`}
@@ -198,7 +198,7 @@ function App() {
                 {traceData.overview?.status || "Unknown"}
               </span>
               <span className="gas-info">
-                Gas: {traceData.overview?.gas_used || "N/A"}
+                {/* Gas: {traceData.overview?.gas_used || "N/A"} */}
               </span>
             </div>
           )}
@@ -416,7 +416,7 @@ function App() {
                     <span className="detail-label">Status</span>
                     <span
                       className={`detail-value status-badge ${
-                        traceData.overview?.status === "Success"
+                        traceData.overview?.status === "✓ Success"
                           ? "success"
                           : "failed"
                       }`}
