@@ -177,12 +177,28 @@ function App() {
   }
 
   return (
-    <main className="app-container">
-      <div className="app-header">
-        <h1>🔍 Raliet</h1>
-      </div>
+    <main className="desktop-app">
+      <header className="app-titlebar">
+        <div className="titlebar-left">
+          <h1>🔍 Raliet</h1>
+          <span className="subtitle">Transaction Debugger</span>
+        </div>
+        <div className="titlebar-right">
+          {traceData && (
+            <div className="transaction-summary">
+              <span className={`status-badge ${traceData.overview?.status === 'Success' ? 'success' : 'failed'}`}>
+                {traceData.overview?.status || 'Unknown'}
+              </span>
+              <span className="gas-info">Gas: {traceData.overview?.gas_used || 'N/A'}</span>
+            </div>
+          )}
+        </div>
+      </header>
 
-      <div className="input-section">
+      <div className="app-body">
+        <aside className="sidebar">
+          <div className="sidebar-section">
+            <h3 className="section-title">Transaction Input</h3>
         <div className="input-group">
           <label htmlFor="tx-hash">Transaction Hash</label>
           <input
@@ -266,62 +282,96 @@ function App() {
         </div>
 
         {error && <div className="error-message">{error}</div>}
-      </div>
-
-      <div className="main-grid">
-        <div className="left-panel">
-          <TraceViewer trace={traceData} loading={loading} />
-        </div>
-        <aside className="history-panel">
-          <div className="history-header">
-            <h3>History</h3>
-            <small>{history.length} saved</small>
           </div>
-          <div className="history-list">
-            {history.length === 0 && (
-              <div className="empty">No history yet</div>
-            )}
-            {history.map((h, i) => (
-              <div key={i} className="history-item">
-                <div className="history-meta">
-                  <div className="history-title">
-                    {h.txHash?.slice(0, 12) ?? "—"}{" "}
-                    <span className="muted">{h.overview?.status ?? ""}</span>
-                  </div>
-                  <div className="history-sub">
-                    {h.rpcUrl} • #{h.blockNumber}
-                  </div>
+
+          <div className="sidebar-section history-section">
+        <h3 className="section-title">History</h3>
+        <div className="history-list">
+          {history.length === 0 && (
+            <div className="empty">No traces yet</div>
+          )}
+          {history.map((h, i) => (
+            <div key={i} className="history-item">
+              <div className="history-meta">
+                <div className="history-title">
+                  {h.txHash?.slice(0, 10) ?? "—"}
+                  <span className="muted">{h.overview?.status ?? ""}</span>
                 </div>
-                <div className="history-actions">
-                  <button
-                    className="mini-btn"
-                    onClick={() => loadHistoryEntry(i)}
-                  >
-                    Load
-                  </button>
-                  <button
-                    className="mini-btn"
-                    onClick={() => {
-                      setTraceData(h.trace);
-                      setTxHash(h.txHash || "");
-                      setRpcUrl(h.rpcUrl || "");
-                      setBlockNumber(String(h.blockNumber || ""));
-                    }}
-                  >
-                    Set
-                  </button>
-                  <button
-                    className="mini-btn"
-                    onClick={() => deleteHistoryEntry(i)}
-                  >
-                    Delete
-                  </button>
+                <div className="history-sub">
+                  Block #{h.blockNumber}
                 </div>
               </div>
-            ))}
-          </div>
-        </aside>
+              <div className="history-actions">
+                <button className="mini-btn" onClick={() => loadHistoryEntry(i)}>
+                  Load
+                </button>
+                <button className="mini-btn" onClick={() => deleteHistoryEntry(i)}>
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+    </aside>
+
+    <main className="main-content">
+      {!traceData && !loading && (
+        <div className="empty-state">
+          <div className="empty-icon">🔍</div>
+          <h2>No Transaction Loaded</h2>
+          <p>Enter a transaction hash and click "Debug Transaction" to start</p>
+        </div>
+      )}
+      
+      {loading && (
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>Tracing transaction...</p>
+        </div>
+      )}
+
+      {traceData && !loading && (
+        <div className="debugger-panels">
+          <div className="transaction-details-panel">
+            <h3 className="panel-title">Transaction Details</h3>
+            <div className="details-grid">
+              <div className="detail-item">
+                <span className="detail-label">From</span>
+                <span className="detail-value mono">{traceData.overview?.from || 'N/A'}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">To</span>
+                <span className="detail-value mono">{traceData.overview?.to || 'N/A'}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Value</span>
+                <span className="detail-value">{traceData.overview?.value || '0'} ETH</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Gas Used</span>
+                <span className="detail-value">{traceData.overview?.gas_used || 'N/A'}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Block</span>
+                <span className="detail-value">#{blockNumber}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Status</span>
+                <span className={`detail-value status-badge ${traceData.overview?.status === 'Success' ? 'success' : 'failed'}`}>
+                  {traceData.overview?.status || 'Unknown'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="trace-panel">
+            <TraceViewer trace={traceData} loading={loading} />
+          </div>
+        </div>
+      )}
+    </main>
+  </div>
 
       {showRpcModal && (
         <div className="modal-backdrop" onClick={() => setShowRpcModal(false)}>
