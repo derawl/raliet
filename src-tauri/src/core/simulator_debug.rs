@@ -217,7 +217,8 @@ async fn get_cast_trace_quick(tx_hash: TxHash, tx_details: &ethers::types::Trans
         .arg(&value)
         .arg("--trace")
         .arg("--rpc-url")
-        .arg(rpc_url);
+        .arg(rpc_url)
+        .arg("-vvvvv");
     
     let output_result = timeout(
         Duration::from_secs(120),
