@@ -435,6 +435,18 @@
   color: #8b5cf6;
 }
 
+.call-type {
+  color: #7c3aed;
+  font-weight: 600;
+  font-size: 11px;
+  padding: 2px 6px;
+  background: #ede9fe;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
 .function-name {
   color: #111827;
   font-weight: 500;
