@@ -35,6 +35,12 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Prepare binaries with target triple suffix
+        shell: bash
+        run: |
+          cp src-tauri/binaries/anvil.exe src-tauri/binaries/anvil-x86_64-pc-windows-msvc.exe
+          cp src-tauri/binaries/cast.exe src-tauri/binaries/cast-x86_64-pc-windows-msvc.exe
+
       - name: Build Tauri app and create release
         uses: tauri-apps/tauri-action@v0
         env:
