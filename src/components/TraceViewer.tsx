@@ -149,6 +149,12 @@ export function TraceViewer({ trace, loading }: TraceViewerProps) {
       const hasChildren = node.children && node.children.length > 0;
       const [callSignature] = node.trace.split("\n");
 
+      // Extract call type (staticcall, delegatecall, call, etc.) - it appears at the end in brackets
+      const callTypeMatch = callSignature.match(
+        /\[(\w+call)\]|\[(CALL|CREATE|CREATE2)\]/i
+      );
+      const callType = callTypeMatch ? callTypeMatch[1] : null;
+
       // Extract just the function name (before any parentheses or parameters)
       const functionNameMatch = callSignature.match(
         /([a-zA-Z_][a-zA-Z0-9_]*)\s*\(/
@@ -190,6 +196,7 @@ export function TraceViewer({ trace, loading }: TraceViewerProps) {
             <span className={`call-depth depth-${node.depth}`}>
               {node.depth === 0 ? "📍" : "•"}
             </span>
+            {callType && <span className="call-type">[{callType}]</span>}
             <span className="function-name">
               {functionName}
               {hasReverted && <span className="revert-indicator">⚠</span>}
