@@ -9,11 +9,31 @@ use crate::types::SimulatorDebugInfo;
 use super::trace_formatter::{format_tenderly_style, format_trace_for_display};
 
 
-/// Get the path to binaries
+/// Get the path to binaries (now uses Tauri sidecar resolution)
 fn get_binary_path(binary_name: &str) -> PathBuf {
-    let current_dir = env::current_dir().unwrap_or_default();
+    // First, try to use the bundled sidecar path
+    // Tauri places sidecars in a specific location relative to the executable
+    if let Ok(exe_path) = env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            // In production, sidecars are in the same directory as the executable
+            let is_windows = cfg!(target_os = "windows");
+            let name = if is_windows { 
+                format!("{}.exe", binary_name)
+            } else { 
+                binary_name.to_string()
+            };
+            let sidecar_path = exe_dir.join(&name);
+            
+            println!("[BINARY] Checking sidecar location: {:?}", sidecar_path);
+            if sidecar_path.exists() {
+                println!("[BINARY] Found {} at sidecar location", binary_name);
+                return sidecar_path;
+            }
+        }
+    }
     
-    // Try current directory first
+    // Fallback to development path
+    let current_dir = env::current_dir().unwrap_or_default();
     let mut binaries_path = current_dir.join("binaries");
     
     // If not found, try going up two levels (from rust-migration/raliet to root)
